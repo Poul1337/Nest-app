@@ -19,7 +19,7 @@ export class UsersController {
     type: UserResponseDto,
   })
   @ApiResponse({ status: 400, description: "Validation error" })
-  createUser(@Body() dto: CreateUserDto) {
+  createUser(@Body() dto: CreateUserDto): Promise<UserResponseDto> {
     return this.usersService.createUser(dto);
   }
 }
