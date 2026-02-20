@@ -1,6 +1,5 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from "@nestjs/common";
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
-import { CreateUserDto } from "./dto/users.dto";
+import { Controller, Get, Param } from "@nestjs/common";
+import { ApiOperation, ApiParam, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { UserResponseDto } from "./dto/users.dto";
 import { UsersService } from "./users.service";
 
@@ -9,17 +8,16 @@ import { UsersService } from "./users.service";
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: "Create a new user" })
-  @ApiBody({ type: CreateUserDto })
+  @Get(":id")
+  @ApiOperation({ summary: "Find user by id" })
+  @ApiParam({ name: "id", description: "User UUID" })
   @ApiResponse({
-    status: 201,
-    description: "User created",
+    status: 200,
+    description: "User found",
     type: UserResponseDto,
   })
-  @ApiResponse({ status: 400, description: "Validation error" })
-  createUser(@Body() dto: CreateUserDto): Promise<UserResponseDto> {
-    return this.usersService.createUser(dto);
+  @ApiResponse({ status: 404, description: "User not found" })
+  getUserById(@Param("id") id: string): Promise<UserResponseDto> {
+    return this.usersService.findUserById(id);
   }
 }

@@ -1,4 +1,8 @@
-import { Injectable } from "@nestjs/common";
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { HashService } from "../../common/services/hash.service";
@@ -7,6 +11,7 @@ import { UsersEntity } from "./entities/users.entity";
 import { UsersMapper } from "./mappers/users.mapper";
 import { EmailVO } from "./value-objects/email.vo";
 import { PasswordVO } from "./value-objects/password.vo";
+import { v4 as uuidv4 } from "uuid";
 
 @Injectable()
 export class UsersService {
@@ -18,13 +23,22 @@ export class UsersService {
 
   async createUser(dto: CreateUserDto): Promise<UserResponseDto> {
     const emailVO = EmailVO.create(dto.email);
-    const passwordVO = PasswordVO.create(dto.password);
 
+    const existing = await this.usersRepository.findOne({
+      where: [{ email: emailVO.getValue() }],
+    });
+
+    if (existing?.email === emailVO.getValue())
+      throw new ConflictException("User with this email already exists");
+
+    const uuid = uuidv4();
+    const passwordVO = PasswordVO.create(dto.password);
     const hashedPassword = await this.hashService.hash(passwordVO.getValue());
     const now = new Date();
 
     const user = this.usersRepository.create({
       ...dto,
+      id: uuid,
       email: emailVO.getValue(),
       password: hashedPassword,
       createdAt: now,
@@ -34,5 +48,15 @@ export class UsersService {
 
     const saved = await this.usersRepository.save(user);
     return UsersMapper.toResponseDto(saved);
+  }
+
+  async findUserById(id: string): Promise<UserResponseDto> {
+    const user = await this.usersRepository.findOne({
+      where: { id },
+    });
+
+    if (!user) throw new NotFoundException("User doesn't exist");
+
+    return UsersMapper.toResponseDto(user);
   }
 }
