@@ -6,7 +6,7 @@ export class EmailVO {
   private constructor(private readonly value: string) {}
 
   static create(email: string): EmailVO {
-    const trimmed = email?.trim() ?? "";
+    const trimmed = email?.trim().toLocaleLowerCase() ?? "";
     if (!trimmed) {
       throw new BadRequestException("Email must be in proper format");
     }

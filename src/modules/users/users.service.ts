@@ -5,13 +5,13 @@ import {
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { HashService } from "../../common/services/hash.service";
-import { CreateUserDto, UserResponseDto } from "./dto/users.dto";
+import { CreateUserDto } from "./dto/create-user.dto";
+import { UserResponseDto } from "./dto/user-response.dto";
 import { UsersEntity } from "./entities/users.entity";
 import { UsersMapper } from "./mappers/users.mapper";
-import { EmailVO } from "./value-objects/email.vo";
+import { HashService } from "src/common/services/hash.service";
 import { PasswordVO } from "./value-objects/password.vo";
-import { v4 as uuidv4 } from "uuid";
+import { EmailVO } from "./value-objects/email.vo";
 
 @Injectable()
 export class UsersService {
@@ -23,7 +23,6 @@ export class UsersService {
 
   async createUser(dto: CreateUserDto): Promise<UserResponseDto> {
     const emailVO = EmailVO.create(dto.email);
-
     const existing = await this.usersRepository.findOne({
       where: [{ email: emailVO.getValue() }],
     });
@@ -31,22 +30,11 @@ export class UsersService {
     if (existing?.email === emailVO.getValue())
       throw new ConflictException("User with this email already exists");
 
-    const uuid = uuidv4();
     const passwordVO = PasswordVO.create(dto.password);
     const hashedPassword = await this.hashService.hash(passwordVO.getValue());
-    const now = new Date();
+    const entity = UsersMapper.toEntity(dto, hashedPassword);
 
-    const user = this.usersRepository.create({
-      ...dto,
-      id: uuid,
-      email: emailVO.getValue(),
-      password: hashedPassword,
-      createdAt: now,
-      updatedAt: now,
-      deletedAt: null,
-    });
-
-    const saved = await this.usersRepository.save(user);
+    const saved = await this.usersRepository.save(entity);
     return UsersMapper.toResponseDto(saved);
   }
 
@@ -59,4 +47,6 @@ export class UsersService {
 
     return UsersMapper.toResponseDto(user);
   }
+
+  async deleteUser()
 }

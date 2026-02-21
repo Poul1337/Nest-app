@@ -18,9 +18,6 @@ export class UsersEntity {
   email: string;
 
   @Column()
-  login: string;
-
-  @Column()
   password: string;
 
   @Column({ name: "created_at" })
