@@ -48,5 +48,14 @@ export class UsersService {
     return UsersMapper.toResponseDto(user);
   }
 
-  async deleteUser()
+  async deleteUser(id: string): Promise<void> {
+    const user = await this.usersRepository.findOne({
+      where: { id },
+    });
+
+    if (!user) throw new NotFoundException("User doesn't exist");
+
+    user.deletedAt = new Date();
+    await this.usersRepository.save(user);
+  }
 }
