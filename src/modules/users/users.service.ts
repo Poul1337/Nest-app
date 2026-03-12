@@ -99,4 +99,16 @@ export class UsersService {
 
     await this.usersRepository.save(user);
   }
+
+  async cleanupSoftDeletedUsers(): Promise<void> {
+    const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+
+    await this.usersRepository
+      .createQueryBuilder()
+      .delete()
+      .from(User)
+      .where("deleted_at IS NOT NULL")
+      .andWhere("deleted_at <:time", { time: oneMinuteAgo })
+      .execute();
+  }
 }
