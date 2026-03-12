@@ -16,6 +16,11 @@ export class EmailVO {
     return new EmailVO(trimmed);
   }
 
+  isEqual(other: EmailVO | string): boolean {
+    const otherValue = typeof other === "string" ? other : other.getValue();
+    return this.value === otherValue;
+  }
+
   getValue(): string {
     return this.value;
   }

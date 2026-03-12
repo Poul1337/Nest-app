@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
@@ -9,9 +10,11 @@ import { CreateUserDto } from "./dto/create-user.dto";
 import { UserResponseDto } from "./dto/user-response.dto";
 import { UsersEntity } from "./entities/users.entity";
 import { UsersMapper } from "./mappers/users.mapper";
-import { HashService } from "src/common/services/hash.service";
+import { HashService } from "../../common/services/hash.service";
 import { PasswordVO } from "./value-objects/password.vo";
 import { EmailVO } from "./value-objects/email.vo";
+import { DeleteUserDto } from "./dto/delete-user.dto";
+import { UpdateUserDto } from "./dto/update-user.dto";
 
 @Injectable()
 export class UsersService {
@@ -24,7 +27,7 @@ export class UsersService {
   async createUser(dto: CreateUserDto): Promise<UserResponseDto> {
     const emailVO = EmailVO.create(dto.email);
     const existing = await this.usersRepository.findOne({
-      where: [{ email: emailVO.getValue() }],
+      where: { email: emailVO.getValue() },
     });
 
     if (existing?.email === emailVO.getValue())
@@ -48,14 +51,52 @@ export class UsersService {
     return UsersMapper.toResponseDto(user);
   }
 
-  async deleteUser(id: string): Promise<void> {
+  async deleteUser(deleteDto: DeleteUserDto): Promise<void> {
+    const { id, password } = deleteDto;
     const user = await this.usersRepository.findOne({
       where: { id },
     });
 
     if (!user) throw new NotFoundException("User doesn't exist");
 
-    user.deletedAt = new Date();
+    const isPasswordCorrect = await this.hashService.compare(
+      password,
+      user.password,
+    );
+    if (!isPasswordCorrect) throw new UnauthorizedException("Invalid password");
+
+    await this.usersRepository.softRemove(user);
+  }
+
+  async updateUser(updateUserDto: UpdateUserDto): Promise<void> {
+    const { email, password, id } = updateUserDto;
+
+    const user = await this.usersRepository.findOne({
+      where: { id },
+    });
+
+    if (!user) throw new NotFoundException("User not found");
+
+    if (email) {
+      const emailVO = EmailVO.create(email);
+      if (emailVO.isEqual(user.email))
+        throw new ConflictException("New email must be different from current");
+      user.email = emailVO.getValue();
+    }
+
+    if (password) {
+      const passwordVO = PasswordVO.create(password);
+      const isSameAsCurrent = await this.hashService.compare(
+        passwordVO.getValue(),
+        user.password,
+      );
+      if (isSameAsCurrent)
+        throw new ConflictException(
+          "New password must be different from current",
+        );
+      user.password = await this.hashService.hash(passwordVO.getValue());
+    }
+
     await this.usersRepository.save(user);
   }
 }
