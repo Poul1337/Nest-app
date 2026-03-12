@@ -1,24 +1,14 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { FriendRequestEnum } from "../enums/friend-request.enum";
+import { SenderResponseDto } from "./sender-response.dto";
 
-export class Sender {
+export class FriendRequestResponseDto {
   @ApiProperty()
   id: string;
 
-  @ApiProperty()
-  firstName: string;
+  @ApiProperty({ type: () => SenderResponseDto })
+  sender: SenderResponseDto;
 
-  @ApiProperty()
-  lastName: string;
-}
-
-export class FriendRequestResponse {
-  @ApiProperty()
-  id: string;
-
-  @ApiProperty()
-  sender: Sender;
-
-  @ApiProperty()
+  @ApiProperty({ enum: FriendRequestEnum })
   status: FriendRequestEnum;
 }

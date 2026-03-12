@@ -10,7 +10,7 @@ import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UserResponseDto } from "../users/dto/user-response.dto";
 import { FriendsService } from "./friends.service";
-import { FriendRequestResponse } from "./dto/friend-request-response.dto";
+import { FriendRequestResponseDto } from "./dto/friend-request-response.dto";
 
 @ApiTags("friends")
 @Controller("friends")
@@ -59,11 +59,12 @@ export class FriendsController {
   @ApiResponse({
     status: 200,
     description: "List of friend requests where current user is receiver",
+    type: [FriendRequestResponseDto],
   })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   getReceivedInvitations(
     @CurrentUser("id") id: string,
-  ): Promise<FriendRequestResponse[]> {
+  ): Promise<FriendRequestResponseDto[]> {
     return this.friendsService.getReceivedFriendRequests(id);
   }
 }

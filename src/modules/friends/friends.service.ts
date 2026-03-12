@@ -6,7 +6,7 @@ import { UsersService } from "../users/users.service";
 import { FriendRequestEnum } from "./enums/friend-request.enum";
 import { FriendRequest } from "./entities/friend-request.entity";
 import { FriendsMapper } from "./mappers/friends.mappers";
-import { FriendRequestResponse } from "./dto/friend-request-response.dto";
+import { FriendRequestResponseDto } from "./dto/friend-request-response.dto";
 
 @Injectable()
 export class FriendsService {
@@ -59,7 +59,7 @@ export class FriendsService {
 
   async getReceivedFriendRequests(
     userId: string,
-  ): Promise<FriendRequestResponse[]> {
+  ): Promise<FriendRequestResponseDto[]> {
     const receivedList = await this.friendRequestRepository.find({
       where: { receiver: { id: userId } },
       relations: ["sender"],

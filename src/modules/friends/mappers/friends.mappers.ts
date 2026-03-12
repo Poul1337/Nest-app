@@ -2,7 +2,7 @@ import { FriendRequest } from "../entities/friend-request.entity";
 import { v4 as uuidv4 } from "uuid";
 import { FriendRequestEnum } from "../enums/friend-request.enum";
 import { User } from "../../users/entities/users.entity";
-import { FriendRequestResponse } from "../dto/friend-request-response.dto";
+import { FriendRequestResponseDto } from "../dto/friend-request-response.dto";
 
 export class FriendsMapper {
   static toEntity(sender: User, receiver: User): FriendRequest {
@@ -18,7 +18,7 @@ export class FriendsMapper {
     return friendRequest;
   }
 
-  static toResponseDto(friendRequest: FriendRequest): FriendRequestResponse {
+  static toResponseDto(friendRequest: FriendRequest): FriendRequestResponseDto {
     return {
       id: friendRequest.id,
       sender: {
