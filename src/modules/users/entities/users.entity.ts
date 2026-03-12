@@ -2,6 +2,8 @@ import {
   Column,
   DeleteDateColumn,
   Entity,
+  JoinTable,
+  ManyToMany,
   PrimaryGeneratedColumn,
 } from "typeorm";
 
@@ -33,4 +35,8 @@ export class User {
 
   @DeleteDateColumn({ name: "deleted_at" })
   deletedAt: Date | null;
+
+  @ManyToMany(() => User, (user) => user.friends)
+  @JoinTable()
+  friends: User[];
 }

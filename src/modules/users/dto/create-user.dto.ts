@@ -9,13 +9,13 @@ import {
 } from "class-validator";
 
 export class CreateUserDto {
-  @ApiProperty({ example: "Jan" })
+  @ApiProperty({ example: "test" })
   @IsString()
   @MinLength(1, { message: "firstName must not be empty" })
   @MaxLength(100)
   firstName: string;
 
-  @ApiProperty({ example: "Kowalski" })
+  @ApiProperty({ example: "user" })
   @IsString()
   @MinLength(1, { message: "lastName must not be empty" })
   @MaxLength(100)
@@ -26,11 +26,11 @@ export class CreateUserDto {
   @IsDate({ message: "dateOfBirth must be a valid date" })
   dateOfBirth: Date;
 
-  @ApiProperty({ example: "jan@example.com" })
+  @ApiProperty({ example: "test@example.com" })
   @IsEmail(undefined, { message: "email must be a valid email address" })
   email: string;
 
-  @ApiProperty({ example: "Haslo123!", minLength: 8 })
+  @ApiProperty({ example: "Pokemon1!", minLength: 8 })
   @IsString()
   @MinLength(8, { message: "password must be at least 8 characters" })
   @MaxLength(100)

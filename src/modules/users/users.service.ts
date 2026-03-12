@@ -42,13 +42,26 @@ export class UsersService {
   }
 
   async findUserById(id: string): Promise<UserResponseDto> {
-    const user = await this.usersRepository.findOne({
-      where: { id },
-    });
+    const user = await this.usersRepository.findOne({ where: { id } });
 
     if (!user) throw new NotFoundException("User doesn't exist");
 
     return UsersMapper.toResponseDto(user);
+  }
+
+  async getSenderAndReceiver(
+    senderId: string,
+    receiverId: string,
+  ): Promise<{ sender: User; receiver: User }> {
+    const [sender, receiver] = await Promise.all([
+      this.usersRepository.findOne({ where: { id: senderId } }),
+      this.usersRepository.findOne({ where: { id: receiverId } }),
+    ]);
+
+    if (!sender) throw new NotFoundException("Sender not found");
+    if (!receiver) throw new NotFoundException("Receiver not found");
+
+    return { sender, receiver };
   }
 
   async deleteUser(id: string, deleteDto: DeleteUserDto): Promise<void> {
@@ -98,6 +111,19 @@ export class UsersService {
     }
 
     await this.usersRepository.save(user);
+  }
+
+  async getFriendsList(id: string): Promise<UserResponseDto[]> {
+    const user = await this.usersRepository.findOne({
+      where: { id },
+      relations: ["friends"],
+    });
+
+    if (!user) throw new NotFoundException("User not found");
+
+    return (user.friends ?? []).map((friend) =>
+      UsersMapper.toResponseDto(friend),
+    );
   }
 
   async cleanupSoftDeletedUsers(): Promise<void> {

@@ -1,13 +1,12 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
+import { ConflictException, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { FriendRequest } from "./entities/friend-request.entity";
 import { Repository } from "typeorm";
+import { UserResponseDto } from "../users/dto/user-response.dto";
 import { UsersService } from "../users/users.service";
-import { FriendRequestDto } from "./dto/friend-request.dto";
+import { FriendRequestEnum } from "./enums/friend-request.enum";
+import { FriendRequest } from "./entities/friend-request.entity";
+import { FriendsMapper } from "./mappers/friends.mappers";
+import { FriendRequestResponse } from "./dto/friend-request-response.dto";
 
 @Injectable()
 export class FriendsService {
@@ -17,19 +16,57 @@ export class FriendsService {
     private readonly usersService: UsersService,
   ) {}
 
-  async sendInvitation(friendRequestDto: FriendRequestDto): Promise<void> {
-    const { receiverId } = friendRequestDto;
+  async getFriendsList(id: string): Promise<UserResponseDto[]> {
+    return await this.usersService.getFriendsList(id);
+  }
 
-    const receiver = await this.usersService.findUserById(receiverId);
+  async sendInvitation(senderId: string, receiverId: string): Promise<void> {
+    const { sender, receiver } = await this.usersService.getSenderAndReceiver(
+      senderId,
+      receiverId,
+    );
 
-    if (!receiver) throw new NotFoundException("User not found");
+    const friendsList = await this.usersService.getFriendsList(senderId);
 
-    const friendRequest = await this.friendRequestRepository.findOne({
-      where: { id: receiverId },
+    const isReceiverInList = friendsList.some(({ id }) => id === receiverId);
+
+    if (isReceiverInList)
+      throw new ConflictException("User already in friends list");
+
+    const existingRequest = await this.friendRequestRepository.findOne({
+      where: [
+        {
+          sender: { id: sender.id },
+          receiver: { id: receiver.id },
+          status: FriendRequestEnum.PENDING,
+        },
+        {
+          sender: { id: receiver.id },
+          receiver: { id: sender.id },
+          status: FriendRequestEnum.PENDING,
+        },
+      ],
     });
 
-    if (friendRequest) throw new ConflictException("Invitation already sent");
+    if (existingRequest)
+      throw new ConflictException(
+        "Friend request already exists or is pending",
+      );
 
-    
+    const request = FriendsMapper.toEntity(sender, receiver);
+    await this.friendRequestRepository.save(request);
+  }
+
+  async getReceivedFriendRequests(
+    userId: string,
+  ): Promise<FriendRequestResponse[]> {
+    const receivedList = await this.friendRequestRepository.find({
+      where: { receiver: { id: userId } },
+      relations: ["sender"],
+    });
+
+    return (receivedList ?? []).map((request) =>
+      FriendsMapper.toResponseDto(request),
+    );
   }
 }
