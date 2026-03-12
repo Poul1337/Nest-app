@@ -4,7 +4,7 @@ import { JwtModule } from "@nestjs/jwt";
 import { PassportModule } from "@nestjs/passport";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { HashService } from "../../common/services/hash.service";
-import { UsersEntity } from "../users/entities/users.entity";
+import { User } from "../users/entities/users.entity";
 import { UsersModule } from "../users/users.module";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
@@ -19,7 +19,7 @@ const JwtFactory = (configService: ConfigService) => ({
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UsersEntity]),
+    TypeOrmModule.forFeature([User]),
     PassportModule,
     UsersModule,
     JwtModule.registerAsync({

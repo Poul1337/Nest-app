@@ -1,11 +1,11 @@
 import { CreateUserDto } from "../dto/create-user.dto";
 import { UserResponseDto } from "../dto/user-response.dto";
-import { UsersEntity } from "../entities/users.entity";
+import { User } from "../entities/users.entity";
 import { v4 as uuidv4 } from "uuid";
 import { EmailVO } from "../value-objects/email.vo";
 
 export class UsersMapper {
-  static toResponseDto(entity: UsersEntity): UserResponseDto {
+  static toResponseDto(entity: User): UserResponseDto {
     return {
       id: entity.id,
       firstName: entity.firstName,
@@ -17,8 +17,8 @@ export class UsersMapper {
     };
   }
 
-  static toEntity(dto: CreateUserDto, hashedPassword: string): UsersEntity {
-    const user = new UsersEntity();
+  static toEntity(dto: CreateUserDto, hashedPassword: string): User {
+    const user = new User();
 
     const now = new Date();
     const emailVO = EmailVO.create(dto.email);

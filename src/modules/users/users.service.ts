@@ -8,7 +8,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UserResponseDto } from "./dto/user-response.dto";
-import { UsersEntity } from "./entities/users.entity";
+import { User } from "./entities/users.entity";
 import { UsersMapper } from "./mappers/users.mapper";
 import { HashService } from "../../common/services/hash.service";
 import { PasswordVO } from "./value-objects/password.vo";
@@ -19,8 +19,8 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(UsersEntity)
-    private readonly usersRepository: Repository<UsersEntity>,
+    @InjectRepository(User)
+    private readonly usersRepository: Repository<User>,
     private readonly hashService: HashService,
   ) {}
 
@@ -51,8 +51,8 @@ export class UsersService {
     return UsersMapper.toResponseDto(user);
   }
 
-  async deleteUser(deleteDto: DeleteUserDto): Promise<void> {
-    const { id, password } = deleteDto;
+  async deleteUser(id: string, deleteDto: DeleteUserDto): Promise<void> {
+    const { password } = deleteDto;
     const user = await this.usersRepository.findOne({
       where: { id },
     });
@@ -68,8 +68,8 @@ export class UsersService {
     await this.usersRepository.softRemove(user);
   }
 
-  async updateUser(updateUserDto: UpdateUserDto): Promise<void> {
-    const { email, password, id } = updateUserDto;
+  async updateUser(id: string, updateUserDto: UpdateUserDto): Promise<void> {
+    const { email, password } = updateUserDto;
 
     const user = await this.usersRepository.findOne({
       where: { id },

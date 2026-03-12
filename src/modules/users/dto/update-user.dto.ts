@@ -1,17 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
-import {
-  IsEmail,
-  IsOptional,
-  IsString,
-  IsUUID,
-  MinLength,
-} from "class-validator";
+import { IsEmail, IsOptional, IsString, MinLength } from "class-validator";
 
 export class UpdateUserDto {
-  @ApiProperty({ description: "User UUID" })
-  @IsUUID(4, { message: "id must be a valid UUID" })
-  id: string;
-
   @ApiProperty({ example: "user@example.com", required: false })
   @IsOptional()
   @IsEmail(undefined, { message: "email must be a valid email address" })

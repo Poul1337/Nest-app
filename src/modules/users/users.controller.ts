@@ -12,6 +12,7 @@ import { UsersService } from "./users.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { DeleteUserDto } from "./dto/delete-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
+import { CurrentUser } from "src/common/decorators/current-user.decorator";
 
 @ApiTags("users")
 @Controller("users")
@@ -41,8 +42,11 @@ export class UsersController {
   @ApiResponse({ status: 204, description: "User soft-deleted" })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   @ApiResponse({ status: 404, description: "User not found" })
-  deleteUser(@Body() deleteDto: DeleteUserDto): Promise<void> {
-    return this.usersService.deleteUser(deleteDto);
+  deleteUser(
+    @Body() deleteDto: DeleteUserDto,
+    @CurrentUser("id") id: string,
+  ): Promise<void> {
+    return this.usersService.deleteUser(id, deleteDto);
   }
 
   @Patch("update")
@@ -57,7 +61,10 @@ export class UsersController {
     status: 409,
     description: "Conflict (e.g. new email/password same as current)",
   })
-  updateUser(@Body() updateDto: UpdateUserDto): Promise<void> {
-    return this.usersService.updateUser(updateDto);
+  updateUser(
+    @Body() updateDto: UpdateUserDto,
+    @CurrentUser("id") id: string,
+  ): Promise<void> {
+    return this.usersService.updateUser(id, updateDto);
   }
 }

@@ -3,7 +3,7 @@ import { JwtService } from "@nestjs/jwt";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { HashService } from "../../common/services/hash.service";
-import { UsersEntity } from "../users/entities/users.entity";
+import { User } from "../users/entities/users.entity";
 import { LogInDto } from "./dto/log-in.dto";
 import { JwtPayload } from "./interfaces/jwt-payload.interface";
 import { EmailVO } from "../users/value-objects/email.vo";
@@ -20,8 +20,8 @@ interface ValidatedUser {
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectRepository(UsersEntity)
-    private readonly usersRepository: Repository<UsersEntity>,
+    @InjectRepository(User)
+    private readonly usersRepository: Repository<User>,
     private readonly hashService: HashService,
     private readonly jwtService: JwtService,
   ) {}
