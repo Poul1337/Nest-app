@@ -15,11 +15,11 @@ export class FriendRequest {
 
   @ManyToOne(() => User)
   @JoinColumn({ name: "sender_id" })
-  sender: User;
+  senderId: User;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: "receiver_id" })
-  receiver: User;
+  receiverId: User;
 
   @Column({
     type: "enum",
