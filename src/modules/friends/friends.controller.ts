@@ -1,4 +1,13 @@
-import { Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -8,9 +17,9 @@ import {
 } from "@nestjs/swagger";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
-import { UserResponseDto } from "../users/dto/user-response.dto";
 import { FriendsService } from "./friends.service";
 import { FriendRequestResponseDto } from "./dto/friend-request-response.dto";
+import { FriendResponseDto } from "../users/dto/friend-response.dto";
 
 @ApiTags("friends")
 @Controller("friends")
@@ -24,10 +33,10 @@ export class FriendsController {
   @ApiResponse({
     status: 200,
     description: "List of friends",
-    type: [UserResponseDto],
+    type: [FriendResponseDto],
   })
   @ApiResponse({ status: 401, description: "Unauthorized" })
-  getFriendsList(@CurrentUser("id") id: string): Promise<UserResponseDto[]> {
+  getFriendsList(@CurrentUser("id") id: string): Promise<FriendResponseDto[]> {
     return this.friendsService.getFriendsList(id);
   }
 
@@ -66,5 +75,44 @@ export class FriendsController {
     @CurrentUser("id") id: string,
   ): Promise<FriendRequestResponseDto[]> {
     return this.friendsService.getReceivedFriendRequests(id);
+  }
+
+  @Patch("reject/:id")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "Reject friend invitation",
+  })
+  @ApiResponse({
+    status: 204,
+    description: "Invitation rejected",
+  })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  rejectInvitation(
+    @CurrentUser("id") userId: string,
+    @Param("id") invitationId: string,
+  ) {
+    return this.friendsService.rejectInvitation(invitationId, userId);
+  }
+
+  @Patch("accept/:id")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Accept friend invitation" })
+  @ApiParam({ name: "id", description: "Invitation UUID" })
+  @ApiResponse({
+    status: 204,
+    description: "Invitation accepted",
+  })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @ApiResponse({ status: 403, description: "Forbidden (not the receiver)" })
+  @ApiResponse({ status: 404, description: "Invitation not found" })
+  acceptInvitation(
+    @CurrentUser("id") userId: string,
+    @Param("id") invitationId: string,
+  ) {
+    return this.friendsService.acceptInvitation(invitationId, userId);
   }
 }

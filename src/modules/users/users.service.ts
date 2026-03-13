@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -15,6 +16,7 @@ import { PasswordVO } from "./value-objects/password.vo";
 import { EmailVO } from "./value-objects/email.vo";
 import { DeleteUserDto } from "./dto/delete-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
+import { FriendResponseDto } from "./dto/friend-response.dto";
 
 @Injectable()
 export class UsersService {
@@ -113,7 +115,7 @@ export class UsersService {
     await this.usersRepository.save(user);
   }
 
-  async getFriendsList(id: string): Promise<UserResponseDto[]> {
+  async getFriendsList(id: string): Promise<FriendResponseDto[]> {
     const user = await this.usersRepository.findOne({
       where: { id },
       relations: ["friends"],
@@ -122,8 +124,38 @@ export class UsersService {
     if (!user) throw new NotFoundException("User not found");
 
     return (user.friends ?? []).map((friend) =>
-      UsersMapper.toResponseDto(friend),
+      UsersMapper.toFriendResponseDto(friend),
     );
+  }
+
+  async addToFriends(userId: string, friendId: string): Promise<void> {
+    if (userId === friendId) {
+      throw new BadRequestException("You cannot add yourself as a friend");
+    }
+
+    const [user, friend] = await Promise.all([
+      this.usersRepository.findOne({
+        where: { id: userId },
+        relations: ["friends"],
+      }),
+      this.usersRepository.findOne({
+        where: { id: friendId },
+        relations: ["friends"],
+      }),
+    ]);
+
+    if (!user || !friend) {
+      throw new NotFoundException("User not found");
+    }
+
+    const alreadyFriends = user.friends.some((f) => f.id === friendId);
+
+    if (alreadyFriends) throw new ConflictException("Already friends");
+
+    user.friends.push(friend);
+    friend.friends.push(user);
+
+    await this.usersRepository.save([user, friend]);
   }
 
   async cleanupSoftDeletedUsers(): Promise<void> {

@@ -1,6 +1,7 @@
 import { User } from "../../users/entities/users.entity";
 import {
   Column,
+  CreateDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
@@ -27,4 +28,9 @@ export class FriendRequest {
     default: FriendRequestEnum.PENDING,
   })
   status: FriendRequestEnum;
+
+  @CreateDateColumn({
+    name: "created_at",
+  })
+  createdAt: Date;
 }

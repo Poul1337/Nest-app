@@ -1,12 +1,17 @@
-import { ConflictException, Injectable } from "@nestjs/common";
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { UserResponseDto } from "../users/dto/user-response.dto";
 import { UsersService } from "../users/users.service";
 import { FriendRequestEnum } from "./enums/friend-request.enum";
 import { FriendRequest } from "./entities/friend-request.entity";
 import { FriendsMapper } from "./mappers/friends.mappers";
 import { FriendRequestResponseDto } from "./dto/friend-request-response.dto";
+import { FriendResponseDto } from "../users/dto/friend-response.dto";
 
 @Injectable()
 export class FriendsService {
@@ -16,7 +21,7 @@ export class FriendsService {
     private readonly usersService: UsersService,
   ) {}
 
-  async getFriendsList(id: string): Promise<UserResponseDto[]> {
+  async getFriendsList(id: string): Promise<FriendResponseDto[]> {
     return await this.usersService.getFriendsList(id);
   }
 
@@ -61,12 +66,58 @@ export class FriendsService {
     userId: string,
   ): Promise<FriendRequestResponseDto[]> {
     const receivedList = await this.friendRequestRepository.find({
-      where: { receiver: { id: userId } },
+      where: {
+        receiver: { id: userId },
+        status: FriendRequestEnum.PENDING,
+      },
       relations: ["sender"],
     });
 
     return (receivedList ?? []).map((request) =>
       FriendsMapper.toResponseDto(request),
     );
+  }
+
+  async rejectInvitation(invitationId: string, userId: string): Promise<void> {
+    const invitation = await this.friendRequestRepository.findOne({
+      where: {
+        id: invitationId,
+        status: FriendRequestEnum.PENDING,
+      },
+      relations: ["receiver"],
+    });
+
+    if (!invitation) throw new NotFoundException("Invitation not found");
+
+    if (invitation.receiver.id !== userId) {
+      throw new ForbiddenException(
+        "You can only reject invitations sent to you",
+      );
+    }
+
+    invitation.status = FriendRequestEnum.REJECTED;
+    await this.friendRequestRepository.save(invitation);
+  }
+
+  async acceptInvitation(invitationId: string, userId: string): Promise<void> {
+    const invitation = await this.friendRequestRepository.findOne({
+      where: {
+        id: invitationId,
+        status: FriendRequestEnum.PENDING,
+      },
+      relations: ["receiver", "sender"],
+    });
+
+    if (!invitation) throw new NotFoundException("Invitation not found");
+
+    if (invitation.receiver.id !== userId) {
+      throw new ForbiddenException(
+        "You can only accept invitations sent to you",
+      );
+    }
+
+    invitation.status = FriendRequestEnum.ACCEPTED;
+    await this.friendRequestRepository.save(invitation);
+    await this.usersService.addToFriends(userId, invitation.sender.id);
   }
 }

@@ -3,6 +3,7 @@ import { UserResponseDto } from "../dto/user-response.dto";
 import { User } from "../entities/users.entity";
 import { v4 as uuidv4 } from "uuid";
 import { EmailVO } from "../value-objects/email.vo";
+import { FriendResponseDto } from "../dto/friend-response.dto";
 
 export class UsersMapper {
   static toResponseDto(entity: User): UserResponseDto {
@@ -14,6 +15,14 @@ export class UsersMapper {
       email: entity.email,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
+    };
+  }
+
+  static toFriendResponseDto(entity: User): FriendResponseDto {
+    return {
+      id: entity.id,
+      firstName: entity.firstName,
+      lastName: entity.lastName,
     };
   }
 
